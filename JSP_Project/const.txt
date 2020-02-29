@@ -1,0 +1,264 @@
+#View
+-Login.		login.jsp
+-BasicUI.		menuUI.jsp
+		captionUI.jsp
+
+-MyDoc_List.	My_PersonalDoc.jsp
+		My_ApprovalDoc.jsp
+		My_GroupDoc.jsp		//My부분을 하나로 해야될 지도 모름
+		main.jsp
+-PersonalDoc_List.	Personal_SendList.jsp
+		Personal_ReceiveList.jsp
+-ApprovalDoc_List.	Approval_SendList.jsp
+		Approval_ReceiveList.jsp
+-GroupDoc_List.	Group_SendList.jsp
+		Groupd_ReceiveList.jsp	
+
+-MakeDoc.	Make_Doc.jsp
+		Make_PersonalDoc.jsp
+		Make_ApprovalDoc.jsp
+		Make_GroupDoc.jsp
+
+-Garbage_List.	Garbage_List.jsp
+-DocContent.	Content_PersonalDoc.jsp
+		Content_ApprovalDoc.jsp
+		Content_GroupdDoc.jsp
+
+#V.O.
+LoginVO :: String userid, String password
+UserVO :: String userid, String name, String grade, String class, String position
+SimpleDocVO :: String docid, String title, String ctime, String sender, int isRead
+	//DocVO를 써도되지만 뭐, 안쓸 컨텐츠까지 빼는것보다야
++그룹문서는 자바로 처리한다고 했던거 같은데 난 잘 모르니 패스
+DeletedDocVO :: String doctype, String docid, String title, String ctime, String sender
+DocVO :: int docid, String doctype, String title, String content, String ctime, String des1, String des2, String des3, String sender, String groupname
+
+#Servelet.
+-DispatcherServlet.java		//모든 요청은 DispatcherServlet을 통함.\
+  ComHanMap<String, ComHan>
+  init()		//커맨드 핸들러들을 load-on-startup으로 동적 로딩하는 함수
+  doget()
+  dopost()
+  process()	//get이든 post든 프로세스를 통해서 작동하도록 통합시킴.
+
+
+#Common
+JDBCTemplate :: Connection getConnection()
+
+#BIZ(사실상 필요한지 의문)
+LogiBiz.....ㅋ
+기타 등등의 Biz는 생략하는거로...
+
+#DAO
+LoginDAO :: UserVO Login(LoginVO)
+	Select userid, name, grade, class, position from usertbl where userid = VO.getUserid and password = VO.getPassword
+DocumentDAO :: SimpleDocVO getSimpleDoc(String id)
+	Select doc.docid, doc.title, doc.sender, doc.ctime, per.isRead from personaltbl as per 
+ 	 innner join documenttbl as doc on doc.docid = per.docid 
+	 where doctype='PERSONAL_TYPE || APPROVAL_TYPE || GROUP_TYPE', and 
+	 doc.des1=id and 
+	 per.listid='receiveList'
+	 and isdelete = 0
+	 order by ctime desc;
+DocumentDAO :: void deleteDoc(String Userid, String Docid)
+	update personaltbl set isdelete=1 where userid=Userid and docid=Docid;
+DocumentDAO :: DeletedDocVO getDeletedDoc(String Userid)
+	Select doc.doctype, doc.docid, doc.title, doc.ctime, doc.sender
+	from documenttbl as doc
+	inner join personaltbl as per 
+	on doc.docid = per.docid
+	where per.isdelete=1 and per.userid = Userid
+	order by ctime desc;
+DocumentDAO :: void EliminateDoc(String Userid, String Docid)
+	delete from personaltbl where userid=Userid and docid = Docid;
+(뭔가 점점 DocumentDAO가 늘어나는거같아요.. 근데 세부적으로 나누지않고
+문서DAO라고 하는이상 어쩔수없을듯)
+DocumentDAO :: void RecoveryDoc(String Userid, String Docid)
+	update personaltbl set isdelete=0 where userid = Userid and docid=Docid;
+DocumentDAO :: void MakePersonalDoc(String Userid, String Title, String Content, String Sender, String Receiver)
+	insert into documenttbl values(null, 'PERSONAL_TYPE', Title, Content, sysdate(), Receiver, null, null, Sender, null)
+DocumentDAO :: void MakeApprovalDoc(String Userid, String Title, String Content, String Sender, String Receiver1, String Receiver2, String Receiver3)
+	insert into documenttbl values(null, 'APPROVAL_TYPE', Title, Content, sysdate(), Receiver1, Receiver2, Receiver3, Sender, null)
+DocumentDAO :: void MakeGroupDoc(String Userid, String Title, String Content, String Sender, String Group)
+	insert into documenttbl values(null, 'GROUP_TYPE', Title, Content, sysdate(), null, null, null, Sender, Group)
+그룹은 잘 모르겟는데...
+저 트리거도 잘 몰라용...
+개인문서랑 결제문서 하면 personaltbl에 추가하는거좀 해주세요...
+이게 이제 사실상 문서가 추가되는 부분.
+개인문서라면은 documenttbl에 추가하고 personaltbl에 추가하면 끝인데...
+결제문서라면 또 다른게있네여...
+승인이 있을거고...취소라고해야되나 결제거부라고해야되나 잇을거니까...
+사실상 첫 receiver한테 갈 때에 문서가 생성된다고 봐야겠네용...
+승인버튼을 누른다고 했던결제문서 다시 안보는거도이상하고...
+승인버튼 누르면 두번째 리시버한테 personaltbl추가를 시켜주셔야 될거같아요....
+두번째가 승인하면 세번째 리시버한테 personaltbl추가시켜주고...
+음... 결제가 state란이 있던거같은데 왜 내 DB에는 안보이지...
+Documenttbl에 잇어서 현재 결제가 진행중인지, 끝났는지, 확인시켜주셔야될거같아요.
+오..이게 personaltbl에 있네요...
+오...어떻게 하실꺼지 나 머리가 안돌아가...
+DocumentDAO :: DocVO getDocument(String Userid, String Docid)
+	select * from documenttbl as doc inner join  personaltbl as per
+	on doc.docid = per.docid
+	where per.userid=Userid and per.docid = Docid
+아 이거 뭐지 이제 헷갈리네
+그냥 콘텐츠이긴한데
+그냥 docid만 가지고있어도 될거같기도하고....
+어차피 콘텐츠 들어가려면 리스트에서 먼저 보여주니까..가지고올때 해당 문서번호...
+아닌가
+없으면 나중에 좀 이상해지려나.... 이부분은 생각해봐요
+
+
+#ComHandler(implements ComHandler)
+	인터페이스. String URI ~~~ComHan implements ComHandler
+-command.login.LoginComHan    		
+	//return BasicUI.LoginSucced.jsp(여기서 바로 Main으로 요청 보내기)
+		//또는 forward나 redirect로 바로 main.jsp 요청하도록 하기.
+-command.searchDoc.SearchMyDocComHan	
+	//3개의 서비스를 가짐(SimplePersonalDocList, SimpleApprovalDocList, SimpleGroupDocList)
+	//List<SimpleDocVO> personalList = SimplePersonalDocList.getList()
+	//List<SimpleDocVO> approvalList = SimpleApprovalDocList.getList()
+	//그룹읍 별게로 groupList
+	//실습에서한거처럼 내부에서 리스트 하나만들고 while돌리세요
+	//request.setAttribute("SimplePersonalList", personalList);
+	//request.setAttribute("SimpleApprovalList", approvalList);
+	//reqeust.setAttribute("SimpleGroupList", 그룹그룹 ㅇㅇ);
+ 	//return MyDoc_List.main.jsp
+	####
+	읽지않은 문서 포함 이부분 누르게되면 음....
+  	중복이 좀 될거같으니까
+	Attribute로 세션에 넣어놓고, 우선. 뭐 이부분을 LoginSucced시에 추가하는거도 괜찮네
+	여튼 넣어놓고 main에서 리스트에 옮겨서 작성할때
+	Attribute의 속성값이 뭐 0(기본값)이라면 isRead가 해당 0인거만 보이게 하고
+	읽지 않음 표시 체크 하게 되면 Attribute의 속성값을 1 로바꾸고
+	다시요청, 이후 main에서는 같은 요청이지만 속성값을 보고 모든 문서 표시하게하고, 해야될거같음.
+	물론, limit를 걸던가 해서 그 페이지별 할당하는것도 필요하고....
+	(DB를 가져온 리스트를 누를때마다 다시 불러오는게 뭔가 아까운거 같긴한데
+	 리스트 자체를 세션에 넣어서 보관한다거나 하는건 정신나간 짓인거 같으니 그때마다 불러오는거로)
+ 	그러네 loginSucced에서 추가시켜주고
+	애초에 그냥 읽지않음이랑 전부다 그거 값보고 체크표시로 둘건지 하는게 낫겠다
+-command.searchDoc.SearchPersonalReceiveDocComHan	
+    	따로 서비스를 가질 필요는 없을듯.
+ 	DocumentDAO :: SimpleDocVO getSimpleDoc(String id)을 그대로 사용.
+	몰랐었는데 main.jsp에서 사용했던거 그대로 사용하면 될듯.
+	물론 개인문서수신함의 경우에는 읽지않은 문서까지 모두 표현해야함.
+	개인수신문서함도 생각해보니 읽지않은 문서만 표현해야할지 선택하는 부분이 있어야 할듯????? 이부분은 나중에 다시 상의
+	기본적으로 시간에 따라 정렬하되, 즉, ResultSet에서는 시간별로 정렬한상태여야함.
+  	jsp문서에서 해당 ResultSet의 SimpleDocVO의 List들을 인덱스대로 읽어서 보여줌
+	이때, 해당 VO의 isRead에 따라서 읽었는지 읽지 않았는지를 표기하면 될 듯.
+-command.searchDoc.SearchApprovalReceiveDocComHan
+-command.searchDoc.SearchGroupReceiveDocComHan
+-command.searchDoc.SearchPersonalSendDocComHan
+-command.searchDoc.SearchApprovalSendDocComHan
+-command.searchDoc.SearchGroupSendDocComHan
+	사실상 여기까지는 비슷한 느낌일듯.
+ 	DAO를 통해서 문서들을빼오고 리스트에 담아서 처리하는 비슷한 방식임.
+	
+	아 한가지 안했었네 
+	검색들을 보게되면 범위가 있었네 
+	개인문서		제목, 작성자, 내용
+	결제문서		제목, 작성자, 내용, 결제자
+	그룹문서		제목, 그룹, 내용
+
+	디폴트로 위의 작업들을 처리하고...
+	위의 설정을 하고 버튼을 눌렀을때에 쿼리문에 추가해야할듯
+	아래와같이 where절에
+		and content=%내용% 이라던가, and sender=작성자 라던가 하는식으로.
+		콤보박스 같은거 인덱스에 따라서 String에 쿼리를 Append시켜주면 될 듯
+-command.deleteDoc.DeleteDocComHan
+	JSP진행에서 썻던것처럼 Personaltbl에서 isDelete를 변경시켜주면 됨.
+	삭제한다면 0을 1로.
+	docid와 userid를 인자로 갖게해야되는데...갖는다고 치고
+	DocumentDAO :: deleteDoc을 통해서 personaltbl의 isdelete를 바꿉니다.
+	이후에 해당 페이지를 리다이렉트 하도록 지시해야되는데....
+	사용자가 원래 어느 페이지였는지를,
+	개인문서리스트에서 삭제했는지 결제문서리스트에서 삭제했는지를 표시하려면
+	두가지 방법이 있을거같은데..
+	아예 다른 커맨드 핸들러를 만들어서 각각의 커맨드 핸들러가 행당하는 페이지를
+	리다이렉트 하도록 지시하는 방법 하나.
+	같은 커맨드핸들러를 사용하면서 request 아니지 다른요청이겟네 forward라면 
+	request가 되겠지만 뭐, 페이지의 경로를 어떻게든 전달해주는 방법 하나.
+	어떤 방식을 하게되던, 
+	personaltbl의 isdelete가 바뀐 이후에 전달받은 페이지의 경로를 통해서
+	다시 리다이렉트. 사용자는 바뀐 isdelete가 적용된 리스트를 보게됨.
+-command.searchDoc.SearchDeletedDocComHan
+	personaltbl에서 로그인된 userid이면서 isdelete가 1인 document를 join하여 얻어냄.
+	위에서의 Search들과 마찬가지로
+	검색하면 해당하는 부분이 나와야되요...
+	휴지통엔 뭔가 복잡한게있어서
+	문서의 종류와 교수님이 말했던거처럼 종류에 따라서 검색될것을 좀 나눠보고싶은데
+	종합적인 3개 새문서때도 안했던건데 이거 하자그러면 할건가
+	어쨋든 생각은 한번해봐요
+	방식이야 같은것에 where절 추가하는 똑같은 방식 써야될꺼니까	
+-command.deleteDoc.EliminateDocComHan
+	DocumentDAO :: EliminateDoc을 사용.	
+	휴지통 리스트에서 제거하기를 눌렀을때에 작동.
+	해당 userid와 선택한 행의 docid값을 매개로 personaltbl에서 제거.
+	이후 SearchDeletedDocComHan 을 다시 호출하도록 리다이렉트 요청.
+	생각해봤는데 리다이렉트 그냥 하면 되더라고용, 경로야 .do로 다 표시 해놨고
+	해당 경로로 요청하면 해당 커맨드핸들러가 작동하니까 ㅇㅇ;
+	안되나 되나 하고있었는데 되는거였네
+	좀 생각해볼만한게, 문서는 생성되는 시점에서 생기고
+	EliminateDocComHan의 경우에는 personaltbl에서 제거를 함.
+	이때, 만약 쉽게 개인문서라고 쳤을때,
+	A와 B 둘다 문서를 지웠다면, 즉 personaltbl에 해당 docid관련이 이제
+	존재하지 않는다면 해당 문서를 documenttbl에서도 지우도록 해야되는데
+	트리거를 써서 이걸 표현할 수 있나용
+-command.deleteDoc.RecoveryDocComHan
+	personaltbl에서 사용자의 userid와 지정한 문서의 docid를 사용해서
+	isdelete를 다시 생성 초기값인 0으로 만듭니다.
+	이때는 물론 재 요청은 휴지통이 되겠습니다.
+	(예를들면 한 사람이 문서를 eliminate 혹은 recovery시켰다면
+	이후 requestDispatcher의 뭐 forward였나 여튼 휴지통이 나와야댐 ㅇㅋ?
+-command.makeDoc.makeDocComHan
+	보여주는 기초화면을 띄우는데 이건 뭐 하겠지머..
+	콤보박스를 누를때(또는 인덱스 잡아놓고 확인버튼 누를때) 동작.
+	인덱스값(개인문서, 결제문서, 그룹문서)에 해당되는 생성폼을 확장시킴.
+	확장하는방법은 사실 잘 감이 안잡혀용...
+	
+-command.makeDoc.makePersonalDocComHan
+-command.makeDoc.makeApprovalDocComHan
+-command.makeDoc.makeGroupdDocComHan
+--3개의 결제 승낙 커맨드핸들러와 결제취소 커맨드 핸들러가 있을 수 있음.
+
+-command.viewDoc.viewPersonalDocComHan
+-command.viewDoc.viewApprovalDocComHan
+-command.viewDoc.viewGroupDocComHan
+	이건 같이 작성할께요...
+	일단 확실한건 각 컨텐츠가 폼이 다르기때문에 jsp문서를 따로 사용해야한다는것.
+	이건 뭐 content로 따로 했었고..
+	
+#Services
+-services.이름짓기귀찮.SimplePersonalDocList	SearchMyDocComHan
+-services.이름짓기귀찮.SimpleApprocalDocList	SearchMyDocComHan
+-services.이름짓기귀찮.그룹리스트뽑는거	SearchMyDocComHan
+
+#properties(.do는 편의상 구분)
+/login.do				=command.login.LoginComHan
+/main.do				=command.searchDoc.SearchMyDocComHan
+/SearchPersonalReceiveDoc.do	=command.searchDoc.SearchPersonalReceiveDocComHan
+/SearchApprovalReceiveDoc.do	=command.searchDoc.SearchApprovalReceiveDocComHan
+/SearchGroupReceiveDoc.do		=command.searchDoc.SearchGroupReceiveDocComHan
+/SearchPersonalSendDoc.do		=command.searchDoc.SearchPersonalSendDocComHan
+/SearchApprovalSendDoc.do		=command.searchDoc.SearchApprovalSendDocComHan
+/SearchGroupSendDoc.do		=command.searchDoc.SearchGroupSendDocComHan
+/DeleteDoc.do			=command.deleteDoc.DeleteDocComHan
+/SearchDeletedDoc.do		=command.searchDoc.SearchDeletedDocComHan
+/EliminateDoc.do			=command.deleteDoc.EliminateDocComHan
+/RecoveryDoc.do			=command.deleteDoc.RecoveryDocComHan
+/MakeDoc.do			=command.makeDoc.makeDocComHan
+/MakePersonalDoc.do		=command.makeDoc.makePersonalDocComHan
+/MakeApprovalDoc.do		=command.makeDoc.makeApprovalDocComHan
+/MakeGroupDoc.do		=command.makeDoc.makeGroupdDocComHan
+/ViewPersonalDoc.do		=command.viewDoc.viewPersonalDocComHan
+/ViewApprovalDoc.do		=command.viewDoc.viewApprovalDocComHan
+/ViewGroupDoc.do			=command.viewDoc.viewGroupDocComHan
+///결제 승낙부분 제일 어려운거같은데 혼자서 어떻게 못할거같아용 저
+//음... 승낙하는 세명의 승낙이 각자의 커맨드 핸들러로 만들어야될지 어떤식으로 진행될지
+//이걸 모르겠네
+//각자의 커맨드핸들러로 만들게된다면 1차,2차,3차 결제자 각각의 승낙과 하나의 결제취소버튼
+//관련 커맨드핸들러 총 4개가 필요할거같아용
+
+//View부분은 뭐가됬든 같은 DocVO를 사용.
+//jsp폼이 달라서 각각의 핸들러로 구분해놨는데 
+//생각을 좀 해보는거도 괜찮을듯.
+//나누는거도 괜찮고 합쳐도 되려나?

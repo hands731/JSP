@@ -1,0 +1,18 @@
+@charset "UTF-8";
+ #List_Left {
+      float: left;
+      width: 33%;
+      flex:1;
+      border:1px solid #97d2cb;
+   }
+   #List_Center {
+      float: 0 auto;
+      flex:1;
+      border:1px solid #97d2cb;
+   }
+   #List_Right {
+      float: right;
+      width: 33%;
+      flex:1;
+      border:1px solid #97d2cb;
+   }

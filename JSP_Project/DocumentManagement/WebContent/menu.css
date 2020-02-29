@@ -1,0 +1,37 @@
+@charset "UTF-8";
+	#head {
+		height:200px;
+		width:1000px;
+		border: solid 8px #97d2cb ;
+		text-align: center;
+		font-size:30px;
+		background-color:#ffffff;
+	}
+	
+	#button_make_doc {
+		width:175px;
+		height:80px;
+		}
+		
+	#content{
+		width:800px;
+		margin-left:200px;
+		border : solid 2px skyblue;
+		text-align:center;
+
+	}
+
+	#menu ul{
+		list-style-type:none;
+	}
+	#menu ul li{
+		font-weight:bold;
+	}
+	#menu{
+		font-weight:bold;
+		width:180px;
+		float:left; 
+		border:1px solid #97d2cb;
+		height:100%;
+		background-color:#97d2cb;
+	}

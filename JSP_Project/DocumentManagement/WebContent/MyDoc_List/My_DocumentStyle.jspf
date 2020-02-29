@@ -1,0 +1,61 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<style>
+#List_Left {
+	float: left;
+	width: 33%;
+	flex: 1;
+	border: 1px solid #97d2cb;
+}
+
+#List_Center {
+	float: 0 auto;
+	flex: 1;
+	border: 1px solid #97d2cb;
+}
+
+#List_Right {
+	float: right;
+	width: 33%;
+	flex: 1;
+	border: 1px solid #97d2cb;
+}
+
+.docId {
+	text-align: center;
+	width: 100px;
+}
+
+.titlemenu .title {
+	text-align: center;
+	width: 300px;
+}
+.docList .title {
+	text-align: left;
+	width: 400px;
+}
+
+.groupName {
+	text-align: center;
+	width: 100px;
+}
+
+.des1 {
+	text-align: center;
+	width: 70px;
+}
+
+.ctime {
+	text-align: center;
+	width: 100px;
+}
+
+.titlemenu td {
+	font-size: 13px;
+}
+
+.listTable {
+	width: 800px;
+	margin-bottom: 100px;
+}
+</style>

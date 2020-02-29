@@ -1,0 +1,58 @@
+
+<%@page import="VO.SimpleGroupListVO"%>
+<%@page import="java.util.List"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+	
+	<script>
+    	menu = document.findViewById("menu");
+    	menu.width = window.document.body.offsetWidth-200;
+
+    	
+    	
+    </script>
+	
+<div id="menu">
+
+	<form action="/DocumentManagement/MakeDoc/Make_Doc.jsp">
+		<button id="button_make_doc" type="submit" value="create_doc">새문서
+			작성</button>
+	</form>
+	<hr>
+	<li><a href="/DocumentManagement/viewMyDocList.do">처음화면으로</a></li>
+	<hr>
+	<p>&nbsp;&nbsp;개인문서</p>
+	<ul>
+		<li><a href="/DocumentManagement/viewPersonalReceiveList.do">수신문서함</a></li>
+		<li><a href="/DocumentManagement/viewPersonalSendList.do">발신문서함</a></li>
+	</ul>
+	<hr>
+	<p>&nbsp;&nbsp;결제문서</p>
+	<ul>
+		<li><a href="/DocumentManagement/viewApprovalReceiveList.do">수신문서함</a></li>
+		<li><a href="/DocumentManagement/viewApprovalSendList.do">발신문서함</a></li>
+	</ul>
+	<hr>
+	<p>&nbsp;&nbsp;그룹문서</p>
+	<ul>
+		<%
+			//List<String> groupList = (List<String>)request.getAttribute("groupList");
+			//UserVO userVO = (UserVO)session.getAttribute("UserInfo");
+			List<String> groupList = userVO.getGroupList();
+			//List<String> groupList = userVO.getGroupList();
+			if (groupList != null)
+				for (String groupName : groupList) {
+					
+		%>
+		<li><a href="/DocumentManagement/viewGroupList.do?groupName=<%=groupName%>"><%=groupName%></a></li>
+		<%
+			}
+		%>
+	</ul>
+	<hr>
+	<ul>
+		<li><a href="/DocumentManagement/viewBin.do">휴지통</a></li>
+		<!-- 수정좀 ㅎㅎ; -->
+
+	</ul>
+</div>

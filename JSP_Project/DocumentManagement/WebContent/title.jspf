@@ -1,0 +1,23 @@
+<%@page import="java.util.List"%>
+<%@page import="VO.UserVO"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+    <script>
+    	head = document.findViewById("head");
+    	haed.width = window.document.body.offsetWidth;
+    
+    </script>
+<div id="head">
+<%
+	UserVO userVO = (UserVO)session.getAttribute("UserInfo");
+	String name = userVO.getName();
+	String userid = userVO.getUserid();
+	//List<String> list = userVO.getGroupList();
+	//request.setAttribute("groupList", list);
+%>
+<p style="text-align: right;font-size: 20px;"><a id="logoutButton" href="/DocumentManagement/logout.do">로그아웃</a></p>
+<p style="margin-top:60px">DOCUMENT MANAGEMENT SYSTEM</p>
+<p style="text-align: right;font-size: 20px;"><%=name%>(<%=userid%>),님 안녕하세요</p>
+<br>
+
+</div> 
